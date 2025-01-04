@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv7 Çatlak Tespiti</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/analiz.css">
+</head>
+<body>
+    <!-- Navbar -->
+    <header>
+        <div class="navbar">
+            <!-- Logo -->
+            <div class="logo" a href="{{ url_for('home') }}">
+                <i class="fas fa-brain"></i>
+                <span>Çatlak Analiz AI</span>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('home') }}">Ana Sayfa</a></li>
+                    <li><a href="{{ url_for('analiz') }}" class="active">Analiz Et</a></li>
+                    <li><a href="{{ url_for('hakkimizda') }}">Hakkımızda</a></li>
+                    <li><a href="{{ url_for('iletisim') }}">İletişim</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Analyze Section -->
+    <section class="analyze">
+        <div class="container">
+            <h1>YOLOv7 Çatlak Tespiti</h1>
+            <p>
+                Resminizi yükleyerek çatlak analizi sonuçlarını öğrenin. Gelişmiş yapay zeka algoritmamız,
+                yüklediğiniz içeriği hızlı ve doğru bir şekilde analiz eder.
+            </p>
+            <div class="upload-section">
+                <form id="uploadForm">
+                    <label for="fileInput" class="upload-label">
+                        <i class="fas fa-upload"></i> Dosya Seçin
+                    </label>
+                    <input type="file" id="fileInput" name="file" accept="image/*" required>
+                    <img id="selectedImage" style="max-width: 50%; margin-top: 15px; display: none;" alt="Seçilen Resim">
+                    <button type="button" onclick="uploadImage()" class="btn">Analizi Başlat</button>
+                </form>
+            </div>
+            <div id="output">
+                <p id="status"></p>
+                <img id="resultImage" style="max-width: 50%; display: none;">
+            </div>
+        </div>
+    </section>
+
+    <!-- Inline Script -->
+    <script>
+        // Seçilen Resmi Göster
+        const fileInput = document.getElementById('fileInput');
+        const selectedImage = document.getElementById('selectedImage');
+
+        fileInput.addEventListener('change', () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    selectedImage.src = e.target.result;
+                    selectedImage.style.display = "block";
+                };
+                reader.readAsDataURL(file);
+            } else {
+                selectedImage.style.display = "none";
+            }
+        });
+
+        // Resim Yükleme ve Analiz
+        async function uploadImage() {
+            const status = document.getElementById('status');
+            const resultImage = document.getElementById('resultImage');
+
+            if (!fileInput.files[0]) {
+                status.innerText = "Lütfen bir resim seçin.";
+                return;
+            }
+
+            status.innerText = "Resim yükleniyor ve analiz ediliyor...";
+            resultImage.style.display = "none";
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/detect', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    status.innerText = "Analiz tamamlandı.";
+                    resultImage.src = data.result_image;
+                    resultImage.style.display = "block";
+                } else {
+                    status.innerText = `Hata: ${data.error}`;
+                }
+            } catch (error) {
+                status.innerText = "Bir hata oluştu.";
+                console.error("Error:", error);
+            }
+        }
+    </script>
+</body>
+</html>
